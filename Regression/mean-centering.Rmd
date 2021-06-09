@@ -1,0 +1,153 @@
+---
+title: "mean-centering"
+author: "rccline"
+date: "6/9/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Mean Centering by Shawn Janzen
+* 13.10 Multiple Linear Regression: Mean-Center & Standardization 
+* [Shawn Janzen's YouTube channel](https://www.youtube.com/watch?v=FYjuu9_5oMQ) 
+
+   
+
+
+1. Take all of OBS and subract the mean -> And the new average is zero.
+2. Standardization does the same but obs/sd
+    will transform the mean centered scores into z scored.
+
+3.  instead of being spread in terms of tne measured variable,
+     it will be spread in terms of the standard deviation,
+     i.e. "normalized distances from the mean"
+
+Why do this?
+4. Both have a mean of zero
+5. The mean-centered can interpret a y-intercept 
+    (standardized, not so much)
+6. mean centered, retains the unit of measure
+7. mean centered Scales stays the same = same slope coefficients
+8. Standardized, Rescales the variable to SD
+9. Standardized Can help with multicollinearity
+10. Standadrized can help When you have interactions, or polynomial terms
+. 
+
+mtcars$hp vector
+```{r}
+mtcars$hp
+```
+
+
+## Mean-Center----
+```{r}
+mtcars$hp.mc <- mtcars$hp - mean(mtcars$hp)
+```
+
+
+
+## Standardize to z-scores----
+*scale is a base R function
+```{r}
+mtcars$hp.st <- scale(mtcars$hp)
+```
+
+
+
+## Look at Regression coefficients----
+```{r}
+summary(lm(qsec ~ hp, data=mtcars))
+
+summary(lm(qsec ~ hp.mc, data=mtcars))
+
+summary(lm(qsec ~ hp.st, data=mtcars)) 
+``` 
+
+
+### Custom function:  *ggplotRegression*
+* [Code from Susan Johston, https://sejohnston.com/ Royal Society University Research Fellow, - Johnson Lab](https://sejohnston.com/2012/08/09/a-quick-and-easy-function-to-plot-lm-results-in-r/)
+```{r}
+library(tidyverse)
+ggplotRegression <- function (fit) {
+
+require(ggplot2)
+
+ggplot(fit$model, aes_string(x = names(fit$model)[2], y = names(fit$model)[1])) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  labs(title = paste("Adj R2 = ",signif(summary(fit)$adj.r.squared, 5),
+                     "Intercept =",signif(fit$coef[[1]],5 ),
+                     " Slope =",signif(fit$coef[[2]], 5),
+                     " P =",signif(summary(fit)$coef[2,4], 5)))
+} 
+```
+
+
+
+```{r eval=FALSE}
+library(tidyverse)
+
+
+ggplotRegression <- function (fit) {
+
+require(ggplot2)
+
+ggplot(fit$model, aes_string(x = names(fit$model)[2], y = names(fit$model)[1])) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  labs(title = paste("Adj R2 = ",signif(summary(fit)$adj.r.squared, 5),
+                     "Intercept =",signif(fit$coef[[1]],5 ),
+                     " Slope =",signif(fit$coef[[2]], 5),
+                     " P =",signif(summary(fit)$coef[2,4], 5)))
+} 
+```
+
+
+#### lm() plot qsec ~ hp
+```{r fig.cap='Fig.1 qsec ~ hp, Original data, not centered.', fig.topcaption=TRUE}
+ggplotRegression(lm(qsec ~ hp, data=mtcars))
+
+``` 
+
+#### lm() plot qsec ~ hp.mc
+```{r  fig.cap='Fig.2 qsec~hp.mc Mean-Centered.', fig.topcaption=TRUE}
+ggplotRegression(lm(qsec ~ hp.mc, data=mtcars))
+
+```
+
+
+#### lm() plot qsec ~ hp.st
+```{r fig.cap='Fig.3 qsec~hp.st SD-Centered.', fig.topcaption=TRUE}
+ggplotRegression(lm(qsec ~ hp.st, data=mtcars))
+```
+ 
+ 
+#### Summary Tables (c.f. Lüdecke, 2021) 
+```{r} 
+
+# https://cran.r-project.org/web/packages/sjPlot/vignettes/tab_model_estimates.html 
+# load package
+library(sjPlot)
+library(sjmisc)
+library(sjlabelled)  
+
+
+```
+
+```{r}
+hp1 <- lm(qsec ~ hp, data=mtcars)
+hp2 <- lm(qsec ~ hp.mc, data=mtcars)
+hp3 <- lm(qsec ~ hp.st, data=mtcars)
+```
+
+```{r}
+tab_model(hp1, hp2, hp3)
+#tab_model(hp2)
+# tab_model(hp3)
+```
+
+Lüdecke, D. (2021, May 25). Data Visualization for Statistics in Social Science [R package sjPlot version 2.8.8]. Comprehensive R Archive Network (CRAN). https://CRAN.R-project.org/package=sjPlot
+
